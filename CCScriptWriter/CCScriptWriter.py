@@ -65,22 +65,95 @@ PATTERNS = [r"\[(06 \w\w \w\w )(\w\w \w\w \w\w \w\w)]",
             r"\[(1A 0[0|1])(( \w\w \w\w \w\w \w\w)+)( \w\w)\]",
             r"\[(1B 0[2|3] )(\w\w \w\w \w\w \w\w)\]",
             r"\[(1F 63 )(\w\w \w\w \w\w \w\w)\]",
+            r"\[(1F 66 \w\w \w\w )(\w\w \w\w \w\w \w\w)\]",
             r"\[(1F C0 \w\w)(( \w\w \w\w \w\w \w\w)+)\]"]
-REPLACE = [["[13][02]\"", "\" end"], ["[03][00]", "\" next\n\""],
-           ["[00]", "\" linebreak\n\""], ["[01]", "\" newline\n\""],
-           ["[02]\"", "\" eob"], ["[0F]", "{inc}"], ["[0D 00]", "{rtoarg}"],
-           ["[0D 01]", "{ctoarg}"], ["[12]", "{clearline}"], ["[13]", "{wait}"],
-           ["[14]", "{prompt}"], ["[18 00]", "{window_closetop}"],
-           ["[18 04]", "{window_closeall}"], ["[18 06]", "{window_clear}"],
-           ["[18 0A]", "{open_wallet}"], ["[1B 00]", "{store_registers}"],
-           ["[1B 01]", "{load_registers}"], ["[1B 04]", "{swap}"],
-           ["[1C 04]", "{open_hp}"], ["[1C 0D]", "{user}"],
-           ["[1C 0E]", "{target}"], ["[1C 0F]", "{delta}"],
-           ["[1C 08 01]  ", "{smash}"], ["[1C 08 02]  ", "{youwon}"],
-           ["[1F 01 02]", "{music_stop}"], ["[1F 03]", "{music_resume}"],
+REPLACE = [["[13][02]\"", "\" end"],
+           ["[03][00]", "\" next\n\""],
+           ["[00]", "\" linebreak\n\""],
+           ["[01]", "\" newline\n\""],
+           ["[02]\"", "\" eob"],
+           ["[03]", "{promptw}"],
+           ["[0F]", "{inc}"],
+           ["[0D 00]", "{rtoarg}"],
+           ["[0D 01]", "{ctoarg}"],
+           ["[11]", "{do_menu}"],
+           ["[12]", "{clearline}"],
+           ["[13]", "{wait}"],
+           ["[14]", "{prompt}"],
+           ["[18 00]", "{window_closetop}"],
+           ["[18 02]", "{back_up_text_rendering_state}"],
+           ["[18 04]", "{window_closeall}"],
+           ["[18 06]", "{window_clear}"],
+           ["[18 0A]", "{open_wallet}"],
+           ["[19 04]", "{unload_strings}"],
+           ["[19 14]", "{get_next_storage_item}"],
+           ["[19 1E]", "{get_delta}"],
+           ["[19 1F]", "{get_action_arg}"],
+           ["[19 20]", "{get_party_size}"],
+           ["[1A 04]", "{do_menu_nocancel}"],
+           ["[1A 07]", "{show_storage_items}"],
+           ["[1A 08]", "{do_menu_nounload_nocancel}"],
+           ["[1A 09]", "{do_menu_nounload}"],
+           ["[1A 0A]", "{phone_call}"],
+           ["[1A 0B]", "{do_teleport_locations_menu}"],
+           ["[1B 00]", "{store_registers}"],
+           ["[1B 01]", "{load_registers}"],
+           ["[1B 04]", "{swap}"],
+           ["[1B 05]", "{store_registers_shared}"],
+           ["[1B 06]", "{load_registers_shared}"],
+           ["[1C 04]", "{open_hp}"],
+           ["[1C 08 01]  ", "{smash}"],
+           ["[1C 08 02]  ", "{youwon}"],
+           ["[1C 0D]", "{user}"],
+           ["[1C 0E]", "{target}"],
+           ["[1C 0F]", "{delta}"],
+           ["[1C 11 00]", "{zwsp}"],
+           ["[1C 14 01]", "{get_user_gender}"],
+           ["[1C 14 02]", "{get_user_and_cohort_count}"],
+           ["[1C 15 01]", "{get_target_gender}"],
+           ["[1C 15 02]", "{get_target_and_cohort_count}"],
+           # ["[1C 11]", "{print_party_m2}"], # only in M2. I assume it's "-tachi"
+           ["[1D 20]", "{user_and_target_names_identical}"],
+           ["[1D 22]", "{can_use_exit_mouse}"],
+           ["[1D 24 01]", "{get_dad_deposit_money}"],
+           ["[1D 24 02]", "{clear_dad_deposit_money}"],
+           ["[1F 01 00]", "{music_stop}"], # the vanilla game has an unused argument. It's always 00
+           ["[1F 01 02]", "{music_stop}"], # nobody knows why the standard library has 02...
+           ["[1F 03]", "{music_resume}"],
            ["[1F 05]", "{music_switching_off}"],
-           ["[1F 06]", "{music_switching_on}"], ["[1F B0]", "{save}"],
-           ["[1F 30]", "{font_normal}"], ["[1F 31]", "{font_saturn}"],
+           ["[1F 04 01]", "{text_blips_default}"],
+           ["[1F 04 02]", "{text_blips_on}"],
+           ["[1F 04 03]", "{text_blips_off}"],
+           ["[1F 06]", "{music_switching_on}"],
+           ["[1F 30]", "{font_normal}"],
+           ["[1F 31]", "{font_saturn}"],
+           ["[1F 50]", "{disable_input}"],
+           ["[1F 51]", "{enable_input}"],
+           ["[1F 61]", "{wait_movement}"],
+           ["[1F 64]", "{backup_npc_members_and_money}"],
+           ["[1F 65]", "{restore_npc_members_and_money}"],
+           ["[1F 68]", "{anchor_set}"],
+           ["[1F 69]", "{anchor_warp}"],
+           ["[1F 71 01 01]", "{learn_teleport_alpha}"],
+           ["[1F 71 04 02]", "{learn_starstorm_alpha}"],
+           ["[1F 71 04 03]", "{learn_starstorm_omega}"],
+           ["[1F 71 01 04]", "{learn_teleport_beta}"],
+           ["[1F 90]", "{do_phone_menu}"], # I've opted to use the "present box"
+           ["[1F A0]", "{open_present}"],  # versions of these, as the vanilla script
+           ["[1F A1]", "{close_present}"], # should only use them for that situation.
+           ["[1F A2]", "{is_present_open}"],
+           ["[1F B0]", "{save}"],
+           ["[1F D1]", "{find_direction_to_truffle}"],
+           ["[1F E5 FF]", "{party_freeze}"],
+           ["[1F E8 FF]", "{party_unfreeze}"],
+           ["[1F ED]", "{restore_camera}"],
+           ["[1F F0]", "{bicycle}"],
+           # thankfully, the version of this where a callback
+           # is specified goes unused, so we don't need to deal with
+           # linebreak overwriting this CC replacement.
+           # (eob CC expects an end-of-string here so [02] by itself works)
+           ["[19 02]", "{start_load_str}"],
+           ["[02]", "{end_load_str}"],
            [" \"\"", ""], [" \"\" ", " "], [" \"\"", ""], ["\"\" ", ""]]
 RE_REPLACE = [r"\[(0[4|5|7])( \w\w \w\w)\]",
               r"\[(10|18 01|18 03|0E|0B|0C)( \w\w)\]",
@@ -108,6 +181,8 @@ HEADER = """/*
  * Time: {}
  * Generated using CCScriptWriter.
  */
+
+import stdext
 
 """.format(time.strftime("%H:%M:%S - %d/%m/%Y"))
 
@@ -226,6 +301,7 @@ def grey_replace(ccScriptCommand, before, after, maxdist, block, replaceFunc):
     # return whatever we wound up with
     return ret
 
+# for control codes with arguments that are one or more singular bytes
 def grey_replaceByteArgs(byteArgs, ccScriptCommand):
     # eventually
     ret = "{" + ccScriptCommand + "("
@@ -248,6 +324,35 @@ def grey_replaceByteArgs(byteArgs, ccScriptCommand):
     # done
     return ret
 
+# for control codes with arguments that are anything other than the above
+def grey_replaceArgPattern(pattern: list[int], byteArgs, ccScriptCommand):
+    # where a pattern is a list of data sizes.
+    # eg, for a control code that takes [short, byte, long],
+    # pattern would be [2, 1, 4].
+    
+    # eventually
+    ret = "{" + ccScriptCommand + "("
+    
+    # split
+    # reversed due to endianness
+    bArgs = byteArgs.split()
+    
+    consumeIdx = 0
+    for i in pattern:
+        # first is different
+        if (consumeIdx > 0):
+            ret = ret + ", "
+        
+        argBytes = bytes(int(i, 16) for i in bArgs[consumeIdx : consumeIdx+i])
+        arg = int.from_bytes(argBytes, 'little')
+        ret = ret + str(arg)
+                
+        consumeIdx += i
+    
+    # end paren
+    ret = ret + ")}"
+    return ret
+
 def grey_replace_all(block):
     # ------------
     # setup return
@@ -258,60 +363,157 @@ def grey_replace_all(block):
     # byte args
     # ---------
     
-    # text control
-    ret = grey_replace("itemname",     "[1C 05 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("name",         "[1C 02 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("psiname",      "[1C 12 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("stat",         "[1C 01 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("teleportname", "[1C 06 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("text_blips",   "[1F 04 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("text_color",   "[1C 00 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("text_pos",     "[18 05 ", "]", 5, ret, grey_replaceByteArgs)
-
-    # goods and money
-    ret = grey_replace("give",    "[1D 00 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("hasitem", "[1D 05 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("take",    "[1D 01 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("usable",  "[1F 81 ", "]", 5, ret, grey_replaceByteArgs)
-
-    # stats
-    ret = grey_replace("boost_guts",        "[1E 0B ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("boost_iq",          "[1E 0A ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("boost_luck",        "[1E 0E ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("boost_speed",       "[1E 0C ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("boost_vitality",    "[1E 0D ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("change_level",      "[1E 08 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("consumepp",         "[1E 07 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("consumepp_percent", "[1E 05 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("heal",              "[1E 02 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("heal_percent",      "[1E 00 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("hurt",              "[1E 03 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("hurt_percent",      "[1E 01 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("recoverpp",         "[1E 06 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("recoverpp_percent", "[1E 04 ", "]", 5, ret, grey_replaceByteArgs)
+    # 18 block - text and menus
+    ret = grey_replace("text_pos",                   "[18 05 ", "]",     5, ret, grey_replaceByteArgs)
+    ret = grey_replace("compare_result",             "[18 07 ", " 00]", 11, ret, lambda x, y: grey_replaceArgPattern([4], x, y))
+    ret = grey_replace("compare_argument",           "[18 07 ", " 01]", 11, ret, lambda x, y: grey_replaceArgPattern([4], x, y))
+    ret = grey_replace("compare_counter",            "[18 07 ", " 02]", 11, ret, lambda x, y: grey_replaceArgPattern([4], x, y))
+    ret = grey_replace("do_menu_in_window_nocancel", "[18 08 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("do_menu_in_window",          "[18 09 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("show_status",                "[18 0D ", "]",     5, ret, grey_replaceByteArgs)
     
-    # sound and music
-    ret = grey_replace("music",        "[1F 00 00 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("music_effect", "[1F 07 ",    "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("sound",        "[1F 02 ",    "]", 2, ret, grey_replaceByteArgs)
+    # 19 block - misc
+    ret = grey_replace("inflict_status",       "[19 05 ", "]",    9, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_char_at_pos",      "[19 10 ", "]",    2, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_name_letter",      "[19 11 ", "]",    2, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_status",           "[19 16 ", "]",    5, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_levelup_exp",      "[19 18 ", "]",    2, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_inventory_item",   "[19 19 ", "]",    5, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_storage_item",     "[19 1A ", "]",    2, ret, grey_replaceByteArgs)
+    ret = grey_replace("count_loaded_strings", "[19 1B ", "]",    2, ret, grey_replaceByteArgs)
+    ret = grey_replace("queue_item",           "[19 1C ", "]",    5, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_queued_item",      "[19 1D ", " 00]", 2, ret, grey_replaceByteArgs)
+    ret = grey_replace("remove_queued_item",   "[19 1D ", " 01]", 2, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_food_type",        "[19 21 ", "]",    2, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_dir_from_char",    "[19 22 ", "]",   12, ret, lambda x, y: grey_replaceArgPattern([1, 1, 2], x, y))
+    ret = grey_replace("get_dir_from_npc",     "[19 23 ", "]",   15, ret, lambda x, y: grey_replaceArgPattern([2, 1, 2], x, y))
+    ret = grey_replace("get_dir_from_sprite",  "[19 24 ", "]",   15, ret, lambda x, y: grey_replaceArgPattern([2, 1, 2], x, y))
+    ret = grey_replace("find_condiment",       "[19 25 ", "]",    2, ret, grey_replaceByteArgs)
+    ret = grey_replace("set_respawn_point",    "[19 26 ", "]",    2, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_stat",             "[19 27 ", "]",    2, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_stat_letter",      "[19 28 ", "]",    2, ret, grey_replaceByteArgs)
+    
+    # 1A block - predefined menus
+    ret = grey_replace("show_inventory", "[1A 05 ", "]", 5, ret, grey_replaceByteArgs)
+    ret = grey_replace("do_shop_menu",   "[1A 06 ", "]", 2, ret, grey_replaceByteArgs)
+    
+    # 1C block - misc, mostly data stuff
+    ret = grey_replace("text_color",               "[1C 00 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("stat",                     "[1C 01 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("name",                     "[1C 02 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("letter",                   "[1C 03 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("itemname",                 "[1C 05 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("teleportname",             "[1C 06 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("print_strings_horizontal", "[1C 07 ", "]",  2, ret, grey_replaceByteArgs)
+    # gfx_text's aliases don't actually handle all vanilla cases, due to {smash} and {youwon} including spaces for... some reason
+    ret = grey_replace("gfx_text",                 "[1C 08 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("set_num_padding",          "[1C 09 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("number",                   "[1C 0A ", "]", 12, ret, lambda x, y: grey_replaceArgPattern([4], x, y))
+    ret = grey_replace("print_strings_vertical",   "[1C 0C ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("psiname",                  "[1C 12 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("battle_animation",         "[1C 13 ", "]",  6, ret, grey_replaceByteArgs)
+    # get_user_info and get_target_info's aliases are handled separately, so they aren't needed here
 
-    # gameplay control
-    ret = grey_replace("event",         "[1F 41 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("hotspot_off",   "[1F 67 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("learnpsi",      "[1F 71 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("lock_movement", "[1F E5 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("party_add",     "[1F 11 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("party_remove",  "[1F 12 ", "]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("teleport",      "[1F 20 ", "]", 5, ret, grey_replaceByteArgs)
-    ret = grey_replace("warp",          "[1F 21 ", "]", 2, ret, grey_replaceByteArgs)
-
-    # visual effects
-    ret = grey_replace("show_party", "[1F EC FF ", "]", 2, ret, grey_replaceByteArgs)
-
-    ret = grey_replace("char_direction",  "[1F 13 ", "]",    5, ret, grey_replaceByteArgs)
-    ret = grey_replace("show_char",       "[1F EC ", "]",    5, ret, grey_replaceByteArgs)
-    ret = grey_replace("hide_char",       "[1F EB ", " 06]", 2, ret, grey_replaceByteArgs)
-    ret = grey_replace("hide_char_float", "[1F 1D ", "]",    2, ret, grey_replaceByteArgs)
+    # 1D block - inventory and party stuff
+    ret = grey_replace("give",                         "[1D 00 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("take",                         "[1D 01 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("arg_item_type_is_not",         "[1D 02 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_item_receiver",            "[1D 03 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("hasequipped",                  "[1D 04 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("hasitem",                      "[1D 05 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("deposit",                      "[1D 06 ", "]", 12, ret, lambda x, y: grey_replaceArgPattern([4], x, y))
+    ret = grey_replace("withdraw",                     "[1D 07 ", "]", 12, ret, lambda x, y: grey_replaceArgPattern([4], x, y))
+    ret = grey_replace("givemoney",                    "[1D 08 ", "]",  5, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
+    ret = grey_replace("takemoney",                    "[1D 09 ", "]",  5, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
+    ret = grey_replace("get_buying_price",             "[1D 0A ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_selling_price",            "[1D 0B ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("check_impediment_for_storing", "[1D 0C ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("character_has_status",         "[1D 0D ", "]",  9, ret, grey_replaceByteArgs)
+    ret = grey_replace("give_and_return_location",     "[1D 0E ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("take_from_location",           "[1D 0F ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("item_at_location_is_equipped", "[1D 10 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("can_equip_item_at_location",   "[1D 11 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("take_from_location_and_store", "[1D 12 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("give_and_unstore_item",        "[1D 13 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("cannot_take_money",            "[1D 14 ", "]", 12, ret, lambda x, y: grey_replaceArgPattern([4], x, y))
+    ret = grey_replace("get_party_size_times",         "[1D 15 ", "]",  5, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
+    ret = grey_replace("cannot_withdraw",              "[1D 17 ", "]", 12, ret, lambda x, y: grey_replaceArgPattern([4], x, y))
+    ret = grey_replace("store_item",                   "[1D 18 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("party_size_smaller_than",      "[1D 19 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("random",                       "[1D 21 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("get_equippable_item_type",     "[1D 23 ", "]",  2, ret, grey_replaceByteArgs)
+    # get_dad_deposit_money_base's aliases are handled separately, so it's not needed here
+    
+    # 1E block - stats
+    ret = grey_replace("heal_percent",      "[1E 00 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("hurt_percent",      "[1E 01 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("heal",              "[1E 02 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("hurt",              "[1E 03 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("recoverpp_percent", "[1E 04 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("consumepp_percent", "[1E 05 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("recoverpp",         "[1E 06 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("consumepp",         "[1E 07 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("change_level",      "[1E 08 ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("boost_experience",  "[1E 09 ", "]", 15, ret, lambda x, y: grey_replaceArgPattern([1, 4], x, y))
+    ret = grey_replace("boost_iq",          "[1E 0A ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("boost_guts",        "[1E 0B ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("boost_speed",       "[1E 0C ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("boost_vitality",    "[1E 0D ", "]",  5, ret, grey_replaceByteArgs)
+    ret = grey_replace("boost_luck",        "[1E 0E ", "]",  5, ret, grey_replaceByteArgs)
+    
+    # 1F block - misc, but in gigantic letters and with at least four exclamation marks
+    ret = grey_replace("music",                   "[1F 00 00 ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("sound",                   "[1F 02 ",    "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("music_effect",            "[1F 07 ",    "]",  2, ret, grey_replaceByteArgs)
+    # text_blips's aliases are handled elsewhere, so it's not needed here
+    ret = grey_replace("party_add",               "[1F 11 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("party_remove",            "[1F 12 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("char_direction",          "[1F 13 ", "]",     5, ret, grey_replaceByteArgs)
+    ret = grey_replace("party_direction",         "[1F 14 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("sprite2_spawn",           "[1F 15 ", "]",    15, ret, lambda x, y: grey_replaceArgPattern([2, 2, 1], x, y))
+    ret = grey_replace("npc_direction",           "[1F 16 ", "]",     9, ret, lambda x, y: grey_replaceArgPattern([2, 1], x, y))
+    ret = grey_replace("npc_spawn",               "[1F 17 ", "]",    15, ret, lambda x, y: grey_replaceArgPattern([2, 2, 1], x, y))
+    ret = grey_replace("show_npc_float",          "[1F 1A ", "]",     9, ret, lambda x, y: grey_replaceArgPattern([2, 1], x, y))
+    ret = grey_replace("hide_npc_float",          "[1F 1B ", "]",     5, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
+    ret = grey_replace("show_char_float",         "[1F 1C ", "]",     5, ret, grey_replaceByteArgs)
+    ret = grey_replace("hide_char_float",         "[1F 1D ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("npc_delete",              "[1F 1E ", "]",     9, ret, lambda x, y: grey_replaceArgPattern([2, 1], x, y))
+    ret = grey_replace("sprite2_delete",          "[1F 1F ", "]",     9, ret, lambda x, y: grey_replaceArgPattern([2, 1], x, y))
+    ret = grey_replace("teleport",                "[1F 20 ", "]",     5, ret, grey_replaceByteArgs)
+    ret = grey_replace("warp",                    "[1F 21 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("start_battle",            "[1F 23 ", "]",     5, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
+    ret = grey_replace("event",                   "[1F 41 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("number_input",            "[1F 52 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("wait_input_timeout",      "[1F 60 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("set_text_mode",           "[1F 62 ", "]",     2, ret, grey_replaceByteArgs)
+    # ret = grey_replace("queue_text",              "[1F 63 ", "]",    12, ret, grey_replaceByteArgs)
+    # ret = grey_replace("hotspot_on",              "[1F 66 ", "]",    18, ret, grey_replaceByteArgs)
+    ret = grey_replace("hotspot_off",             "[1F 67 ", "]",     2, ret, grey_replaceByteArgs)
+    # learnpsi's aliases are handled elsewhere, so it's not needed here
+    ret = grey_replace("usable",                  "[1F 81 ", "]",     5, ret, grey_replaceByteArgs)
+    ret = grey_replace("equip",                   "[1F 83 ", "]",     5, ret, grey_replaceByteArgs)
+    ret = grey_replace("switch_call",             "[1F C0 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("try_fixing_an_item",      "[1F D0 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("photo_time",              "[1F D2 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("pathfinding_npc_time",    "[1F D3 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("fade_map_palette",        "[1F E1 ", "]",     9, ret, grey_replaceByteArgs)
+    ret = grey_replace("sprite2_direction",       "[1F E4 ", "]",     9, ret, lambda x, y: grey_replaceArgPattern([2, 1], x, y))
+    ret = grey_replace("char_freeze",             "[1F E5 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("npc_freeze",              "[1F E6 ", "]",     5, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
+    ret = grey_replace("sprite2_freeze",          "[1F E7 ", "]",     5, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
+    ret = grey_replace("char_unfreeze",           "[1F E8 ", "]",     2, ret, grey_replaceByteArgs)
+    ret = grey_replace("npc_unfreeze",            "[1F E9 ", "]",     5, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
+    ret = grey_replace("sprite2_unfreeze",        "[1F EA ", "]",     5, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
+    ret = grey_replace("hide_char",               "[1F EB ", " 06]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("hide_char_with_style",    "[1F EB ", "]",     5, ret, grey_replaceByteArgs)
+    ret = grey_replace("show_party",              "[1F EC FF ", "]",  2, ret, grey_replaceByteArgs)
+    ret = grey_replace("show_char",               "[1F EC ", "]",     5, ret, grey_replaceByteArgs)
+    ret = grey_replace("focus_camera_on_npc",     "[1F EE ", "]",     5, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
+    ret = grey_replace("focus_camera_on_sprite2", "[1F EF ", "]",     5, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
+    ret = grey_replace("npc_do_mc",               "[1F F1 ", "]",    12, ret, lambda x, y: grey_replaceArgPattern([2, 2], x, y))
+    ret = grey_replace("sprite2_do_mc",           "[1F F2 ", "]",    12, ret, lambda x, y: grey_replaceArgPattern([2, 2], x, y))
+    ret = grey_replace("show_sprite2_float",      "[1F F3 ", "]",     9, ret, lambda x, y: grey_replaceArgPattern([2, 1], x, y))
+    ret = grey_replace("hide_sprite2_float",      "[1F F4 ", "]",     9, ret, lambda x, y: grey_replaceArgPattern([2], x, y))
 
     # --------
     # end func
@@ -530,6 +732,8 @@ class CCScriptWriter:
         m("\ncommand e(label) \"{long label}\"")
         m("\ncommand _lasmptr(loc,target) {\n    ROMTBL[loc, 1, 1] = short [0] "
           "target\n    ROMTBL[loc, 7, 1] = short [1] target\n}")
+        m("\ncommand start_load_str \"[19 02]\"")
+        m("\ncommand end_load_str \"[02]\"")
 
         # Output each data_xx.ccs file.
         numFiles = math.ceil(len(self.dialogue) / 100)
@@ -540,7 +744,9 @@ class CCScriptWriter:
             dataFile = open(os.path.join(o, fileName), "w")
             d = dataFile.write
             d(HEADER)
-            d("command e(label) \"{long label}\"\n")
+            d("command e(label) \"{long label}\"")
+            d("\ncommand start_load_str \"[19 02]\"")
+            d("\ncommand end_load_str \"[02]\"\n")
             d("\n// Text Data\n")
             dialogue = sorted(self.dialogue)[i * 100:i * 100 + 100]
             m("\n\n// Memory Overwriting: {}".format(fileName))
@@ -830,8 +1036,8 @@ class CCScriptWriter:
 
     # Replaces the control code's pointer(s) with labels instead.
     def replaceWithLabel(self, matchObj):
-
         prefix = matchObj.groups()[0]
+        # just one pointer (prefix and ptr)
         if len(matchObj.groups()) < 3:
             pointer = matchObj.groups()[1]
             address = FromSNES(pointer)
@@ -839,28 +1045,103 @@ class CCScriptWriter:
                 return "[{}00 00 00 00]".format(prefix)
             m = self.dataFiles[address]
             h = hex(address)
+            
+            # goto
             if prefix == "0A " and not self.raw:
                 return "\" goto({}.l_{}) \"".format(m, h)
+            # call
             elif prefix == "08 " and not self.raw:
                 return "\" call({}.l_{}) \"".format(m, h)
+            # goto_if_false
+            elif prefix == "1B 02 " and not self.raw:
+                return "\" goto_if_false({}.l_{}) \"".format(m, h)
+            # goto_if_true
+            elif prefix == "1B 03 " and not self.raw:
+                return "\" goto_if_true({}.l_{}) \"".format(m, h)
+            # queue_text
+            elif prefix == "1F 63 " and not self.raw:
+                return "{{queue_text({}.l_{})}}".format(m, h)
+            # goto_if_flag
+            elif prefix[:2] == "06" and not self.raw:
+                return "\" goto_if_flag({}, {}.l_{}) \"".format(int.from_bytes(bytes(int(byte, 16) for byte in prefix[3:].split()), "little"), m, h)
+            # hotspot_on
+            elif prefix[:5] == "1F 66" and not self.raw:
+                return "{{hotspot_on({}, {}, {}.l_{})}}".format(
+                    int(prefix[6:8], 16), int(prefix[9:11], 16), m, h
+                )
+            # just the bytes
             else:
                 return "[{}{{e({}.l_{})}}]".format(prefix, m, h)
+
+        # many pointers
         else:
             pointers = matchObj.groups()[1].split()
-            returnString = "[{}".format(prefix)
-            i = 0
-            while i < len(pointers):
+            def getAddrString(i):
                 address = FromSNES(" ".join(map(str, pointers[i:i + 4])))
                 if address <= 0:
-                    returnString += " 00 00 00 00"
+                    return "0"
                 else:
-                    returnString += " {{e({}.l_{})}}".format(
-                                                      self.dataFiles[address],
-                                                      hex(address))
-                i += 4
-            if len(matchObj.groups()) == 4:
-                returnString += matchObj.groups()[3]
-            returnString += "]"
+                    return "{}.l_{}".format(
+                        self.dataFiles[address],
+                        hex(address)
+                    )
+            
+            # switch_goto
+            if prefix[:2] == "09" and not self.raw:
+                returnString = "\" switch_goto(" + str(int(prefix[3:5], 16)) + ") "
+                i = 0
+                while i < len(pointers):
+                    returnString += "switch_entry({}) ".format(getAddrString(i))
+                    i += 4
+                returnString += "\""
+
+            # switch_call (unused)
+            elif prefix[:5] == "1F C0" and not self.raw:
+                returnString = "\" switch_call(" + str(int(prefix[6:8], 16))  + ") "
+                i = 0
+                while i < len(pointers):
+                    returnString += "switch_entry({}) ".format(getAddrString(i))
+                    i += 4
+                returnString += "\""
+            
+            # select_char_nocancel (unused)
+            elif prefix[:5] == "1A 00" and not self.raw:
+                returnString = "\" select_char_nocancel("
+                i = 0
+                while i < len(pointers):
+                    returnString += "{}, ".format(getAddrString(i))
+                    i += 4
+
+                returnString += "{}) \"".format(str(int(matchObj.groups()[-1], 16)))
+            
+            # select_char
+            elif prefix[:5] == "1A 01" and not self.raw:
+                returnString = "\" select_char("
+                i = 0
+                while i < len(pointers):
+                    returnString += "{}, ".format(getAddrString(i))
+                    i += 4
+                
+                returnString += "{}) \"".format(str(int(matchObj.groups()[-1], 16)))
+            
+            
+            # just the bytes
+            else:
+                returnString = "[{}".format(prefix)
+                i = 0
+                while i < len(pointers):
+                    address = FromSNES(" ".join(map(str, pointers[i:i + 4])))
+                    if address <= 0:
+                        returnString += " 00 00 00 00"
+                    else:
+                        returnString += " {{e({}.l_{})}}".format(
+                                                        self.dataFiles[address],
+                                                        hex(address))
+                    i += 4
+                if len(matchObj.groups()) == 4:
+                    returnString += matchObj.groups()[3]
+                returnString += "]"
+
             return returnString
 
     # Replace with CCScript syntax.
