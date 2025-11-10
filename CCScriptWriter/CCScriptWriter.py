@@ -80,9 +80,9 @@ REPLACE = [["[13][02]\"", "\" end"],
            ["[12]", "{clearline}"],
            ["[13]", "{wait}"],
            ["[14]", "{prompt}"],
-           ["[18 00]", "{window_closetop}"],
+           ["[18 00]", "\" window_closetop\n\""],
            ["[18 02]", "{back_up_text_rendering_state}"],
-           ["[18 04]", "{window_closeall}"],
+           ["[18 04]", "\" window_closeall\n\""],
            ["[18 06]", "{window_clear}"],
            ["[18 0A]", "{open_wallet}"],
            ["[19 04]", "{unload_strings}"],
@@ -129,7 +129,7 @@ REPLACE = [["[13][02]\"", "\" end"],
            ["[1F 31]", "{font_saturn}"],
            ["[1F 50]", "{disable_input}"],
            ["[1F 51]", "{enable_input}"],
-           ["[1F 61]", "{wait_movement}"],
+           ["[1F 61]", "\" wait_movement\n\""],
            ["[1F 64]", "{backup_npc_members_and_money}"],
            ["[1F 65]", "{restore_npc_members_and_money}"],
            ["[1F 68]", "{anchor_set}"],
@@ -152,8 +152,8 @@ REPLACE = [["[13][02]\"", "\" end"],
            # is specified goes unused, so we don't need to deal with
            # linebreak overwriting this CC replacement.
            # (eob CC expects an end-of-string here so [02] by itself works)
-           ["[19 02]", "{start_load_str}"],
-           ["[02]", "{end_load_str}"],
+           ["[19 02]", "\" start_load_str\n\""],
+           ["[02]", "\"\nend_load_str\n\""],
            [" \"\"", ""], [" \"\" ", " "], [" \"\"", ""], ["\"\" ", ""]]
 RE_REPLACE = [r"\[(0[4|5|7])( \w\w \w\w)\]",
               r"\[(10|18 01|18 03|0E|0B|0C)( \w\w)\]",
@@ -492,7 +492,6 @@ def grey_replace_all(block):
     # learnpsi's aliases are handled elsewhere, so it's not needed here
     ret = grey_replace("usable",                  "[1F 81 ", "]",     5, ret, grey_replaceByteArgs)
     ret = grey_replace("equip",                   "[1F 83 ", "]",     5, ret, grey_replaceByteArgs)
-    ret = grey_replace("switch_call",             "[1F C0 ", "]",     2, ret, grey_replaceByteArgs)
     ret = grey_replace("try_fixing_an_item",      "[1F D0 ", "]",     2, ret, grey_replaceByteArgs)
     ret = grey_replace("photo_time",              "[1F D2 ", "]",     2, ret, grey_replaceByteArgs)
     ret = grey_replace("pathfinding_npc_time",    "[1F D3 ", "]",     2, ret, grey_replaceByteArgs)
@@ -664,7 +663,7 @@ class CCScriptWriter:
             address = FromSNES(address)
             m = self.dataFiles[address]
             h = hex(address)
-            self.specialPointers[p] = "[{{e({}.l_{})}}]".format(m, h)
+            self.specialPointers[p] = "{{long {}.l_{}}}".format(m, h)
         for a in ASM_POINTERS:
             if self.data[a + 3] == 0x85:
                 address = FromSNES("{} {} {} {}".format(
@@ -712,6 +711,53 @@ class CCScriptWriter:
                 for r in RE_REPLACE:
                     b = re.sub(r, self.replaceWithCCScript, b)
                 b = grey_replace_all(b)
+            
+            # Replace start_load_str / end_load_str pairs with a singular command (load_str)
+            # There's a bug where some of the Tenda trade sequence stuff (around C6505D)
+            # has an eob instead of end_load_str...
+            # However this masks the issue.
+            startEndLoadStrPairs = re.findall(r"(start_load_str\n(\".*?\")(?:\nend_load_str| eob))", b)
+            for match in startEndLoadStrPairs:
+                b = b.replace(match[0], "load_str(" + match[1] + ")", 1)
+            
+            # Perform a final tidy-up of commands
+            # Namely, make escaped commands at the beginning and end of strings just exist outside the string.
+            # Repeating this until no more changes are found is also able to eliminate
+            # cases where a string consists of nothing but escaped comands.
+            lines = b.split("\n")
+            for lineIndex, line in enumerate(lines):
+                lastModification = line
+                
+                # no do-while in python ...
+                while True:
+                    # Standalone commands at the beginning of a string
+                    startCommand = re.search(r"\"{(.*?)}", line)
+                    if startCommand is not None:
+                        line = re.sub(r"\"{(.*?)}", startCommand.groups()[0] + "\n\"", line)
+                    
+                    # Standalone commands at the end of a string
+                    endCommand = re.search(r"{([^}]*?)}\"", line)
+                    if endCommand is not None:
+                        line = re.sub(r"{([^}]*?)}\"", "\" " + endCommand.groups()[0] + "\n", line)
+                    
+                    # If we reached the end of our changes, break
+                    if lastModification == line:
+                        break
+                    
+                    lastModification = line
+                        
+                lines[lineIndex] = line    
+            b = "\n".join(lines)
+            
+            # And tidy up any mess caused by the above.
+            # Replace empty strings with nothing.
+            b = re.sub(r"\"\"", "", b)
+            # And same for those with a space afterwards, as it's no longer needed.
+            b = re.sub(r"\"\" ", "", b)
+            # Remove singular leading spaces
+            b = re.sub(r"\n (?=\S)", "\n", b)
+            # (Same for start of match; affects some window_opens and im not super sure why it's treated different...)
+            b = re.sub(r"^ (?=\S)", "", b)
                 
             self.dialogue[block][0] = b
 
@@ -732,8 +778,6 @@ class CCScriptWriter:
         m("\ncommand e(label) \"{long label}\"")
         m("\ncommand _lasmptr(loc,target) {\n    ROMTBL[loc, 1, 1] = short [0] "
           "target\n    ROMTBL[loc, 7, 1] = short [1] target\n}")
-        m("\ncommand start_load_str \"[19 02]\"")
-        m("\ncommand end_load_str \"[02]\"")
 
         # Output each data_xx.ccs file.
         numFiles = math.ceil(len(self.dialogue) / 100)
@@ -744,9 +788,8 @@ class CCScriptWriter:
             dataFile = open(os.path.join(o, fileName), "w")
             d = dataFile.write
             d(HEADER)
-            d("command e(label) \"{long label}\"")
-            d("\ncommand start_load_str \"[19 02]\"")
-            d("\ncommand end_load_str \"[02]\"\n")
+            # d("\ncommand start_load_str \"[19 02]\"")
+            # d("\ncommand end_load_str \"[02]\"\n")
             d("\n// Text Data\n")
             dialogue = sorted(self.dialogue)[i * 100:i * 100 + 100]
             m("\n\n// Memory Overwriting: {}".format(fileName))
@@ -1051,19 +1094,19 @@ class CCScriptWriter:
                 return "\" goto({}.l_{}) \"".format(m, h)
             # call
             elif prefix == "08 " and not self.raw:
-                return "\" call({}.l_{}) \"".format(m, h)
+                return "\" call({}.l_{})\n\"".format(m, h)
             # goto_if_false
             elif prefix == "1B 02 " and not self.raw:
-                return "\" goto_if_false({}.l_{}) \"".format(m, h)
+                return "\" goto_if_false({}.l_{})\n\"".format(m, h)
             # goto_if_true
             elif prefix == "1B 03 " and not self.raw:
-                return "\" goto_if_true({}.l_{}) \"".format(m, h)
+                return "\" goto_if_true({}.l_{})\n\"".format(m, h)
             # queue_text
             elif prefix == "1F 63 " and not self.raw:
                 return "{{queue_text({}.l_{})}}".format(m, h)
             # goto_if_flag
             elif prefix[:2] == "06" and not self.raw:
-                return "\" goto_if_flag({}, {}.l_{}) \"".format(int.from_bytes(bytes(int(byte, 16) for byte in prefix[3:].split()), "little"), m, h)
+                return "\" goto_if_flag({}, {}.l_{})\n\"".format(int.from_bytes(bytes(int(byte, 16) for byte in prefix[3:].split()), "little"), m, h)
             # hotspot_on
             elif prefix[:5] == "1F 66" and not self.raw:
                 return "{{hotspot_on({}, {}, {}.l_{})}}".format(
@@ -1088,19 +1131,19 @@ class CCScriptWriter:
             
             # switch_goto
             if prefix[:2] == "09" and not self.raw:
-                returnString = "\" switch_goto(" + str(int(prefix[3:5], 16)) + ") "
+                returnString = "\"switch_goto(" + str(int(prefix[3:5], 16)) + ")\n"
                 i = 0
                 while i < len(pointers):
-                    returnString += "switch_entry({}) ".format(getAddrString(i))
+                    returnString += "    switch_entry({})\n".format(getAddrString(i))
                     i += 4
                 returnString += "\""
 
-            # switch_call (unused)
+            # switch_call
             elif prefix[:5] == "1F C0" and not self.raw:
-                returnString = "\" switch_call(" + str(int(prefix[6:8], 16))  + ") "
+                returnString = "\"switch_call(" + str(int(prefix[6:8], 16))  + ")\n"
                 i = 0
                 while i < len(pointers):
-                    returnString += "switch_entry({}) ".format(getAddrString(i))
+                    returnString += "    switch_entry({})\n".format(getAddrString(i))
                     i += 4
                 returnString += "\""
             
@@ -1158,9 +1201,9 @@ class CCScriptWriter:
         elif t == "10":
             return "{{pause({})}}".format(a)
         elif t == "18 01":
-            return "{{window_open({})}}".format(a)
+            return "\" window_open({})\n\"".format(a)
         elif t == "18 03":
-            return "{{window_switch({})}}".format(a)
+            return "\" window_switch({})\n\"".format(a)
         elif t == "0E":
             return "{{counter({})}}".format(a)
         elif t == "0B":
